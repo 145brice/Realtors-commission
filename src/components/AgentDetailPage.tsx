@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Agent, Review, RecentSale } from '@/types';
@@ -94,7 +94,7 @@ const mockRecentSales: RecentSale[] = [
 ];
 
 export default function AgentDetailPage({ agentId }: AgentDetailPageProps) {
-  const [agent] = useState<Agent>(mockAgent);
+  const [agent] = useState<Agent>({ ...mockAgent, id: agentId });
   const [reviews] = useState<Review[]>(mockReviews);
   const [recentSales] = useState<RecentSale[]>(mockRecentSales);
   const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'sales'>('overview');

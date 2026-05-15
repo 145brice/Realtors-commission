@@ -3,24 +3,23 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/store/appStore';
 
+const mockLocations = [
+  'Los Angeles, CA',
+  'San Francisco, CA',
+  'San Diego, CA',
+  'Sacramento, CA',
+  'San Jose, CA',
+  'Beverly Hills, CA',
+  'Santa Monica, CA',
+  'Pasadena, CA',
+];
+
 export default function SearchBar() {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { setSearchLocation } = useAppStore();
-
-  // Mock location suggestions
-  const mockLocations = [
-    'Los Angeles, CA',
-    'San Francisco, CA',
-    'San Diego, CA',
-    'Sacramento, CA',
-    'San Jose, CA',
-    'Beverly Hills, CA',
-    'Santa Monica, CA',
-    'Pasadena, CA',
-  ];
 
   useEffect(() => {
     if (query.length > 2) {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAppStore } from '@/store/appStore';
+import { SearchFilters } from '@/types';
 
 const specialtyOptions = ['Residential', 'Luxury', 'Commercial', 'Investment', 'First-Time Buyers', 'Condos', 'New Construction'];
 const languageOptions = ['English', 'Spanish', 'Mandarin', 'French', 'Korean', 'Russian', 'Japanese'];
@@ -68,7 +69,7 @@ export default function Filters() {
           <select
             value={`${filters.sort_by}-${filters.sort_order}`}
             onChange={(e) => {
-              const [sort_by, sort_order] = e.target.value.split('-') as [any, 'asc' | 'desc'];
+              const [sort_by, sort_order] = e.target.value.split('-') as [SearchFilters['sort_by'], SearchFilters['sort_order']];
               setFilters({ sort_by, sort_order });
             }}
             className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg"
