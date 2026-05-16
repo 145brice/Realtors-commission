@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Agent } from '@/types';
-import { formatCommission, formatPhoneNumber, getInitials } from '@/lib/utils';
+import { formatCommission, getInitials } from '@/lib/utils';
 
 interface AgentCardProps {
   agent: Agent;
