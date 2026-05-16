@@ -1,5 +1,6 @@
 import AgentDetailPage from '@/components/AgentDetailPage';
 
-export default function AgentPage({ params }: { params: { id: string } }) {
-  return <AgentDetailPage agentId={params.id} />;
+export default async function AgentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <AgentDetailPage agentId={id} />;
 }
