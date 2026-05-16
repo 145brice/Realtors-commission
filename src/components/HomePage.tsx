@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import SearchBar from './SearchBar';
 import Filters from './Filters';
 import AgentList from './AgentList';
-import MapView from './MapView';
 import { useAppStore } from '@/store/appStore';
 import { Agent } from '@/types';
+
+const MapView = dynamic(() => import('./MapView'), { ssr: false });
 
 // Mock data for initial development
 const mockAgents: Agent[] = [
