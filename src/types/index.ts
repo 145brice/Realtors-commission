@@ -86,3 +86,50 @@ export interface SearchLocation {
   state?: string;
   zip?: string;
 }
+
+export interface IdxProviderConfig {
+  provider: 'mls-grid' | 'trestle' | 'reso-web-api' | 'custom';
+  mlsName: string;
+  participantBrokerage: string;
+  participantBrokerageLicense?: string;
+  dataSourceName: string;
+  lastSyncedAt?: string;
+  refreshIntervalHours: number;
+  complianceContactEmail?: string;
+}
+
+export interface IdxAttribution {
+  mlsName: string;
+  listingBrokerName: string;
+  listingAgentName?: string;
+  listingAgentPhone?: string;
+  sourceSystemName?: string;
+  listingKey: string;
+  listingId: string;
+  lastUpdatedAt: string;
+  copyrightNotice?: string;
+  disclaimer?: string;
+}
+
+export interface IdxListing {
+  id: string;
+  listing_key: string;
+  listing_id: string;
+  standard_status: 'Active' | 'Active Under Contract' | 'Pending' | 'Closed' | 'Coming Soon';
+  property_type: string;
+  property_sub_type?: string;
+  list_price: number;
+  bedrooms_total?: number;
+  bathrooms_total_integer?: number;
+  living_area?: number;
+  lot_size_square_feet?: number;
+  unparsed_address: string;
+  city: string;
+  state_or_province: string;
+  postal_code: string;
+  latitude?: number;
+  longitude?: number;
+  public_remarks?: string;
+  media_urls: string[];
+  attribution: IdxAttribution;
+}

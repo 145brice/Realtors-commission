@@ -6,6 +6,7 @@ import SearchBar from './SearchBar';
 import Filters from './Filters';
 import AgentList from './AgentList';
 import AuthPrompt from './AuthPrompt';
+import IdxComplianceNotice from './IdxComplianceNotice';
 import { useAppStore } from '@/store/appStore';
 import { getCurrentUser, listAgentsFromAppwrite } from '@/lib/appwrite';
 import { mockAgents } from '@/lib/mockData';
@@ -74,6 +75,7 @@ export default function HomePage() {
           )}
         </div>
         <Filters />
+        <IdxComplianceNotice />
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">

@@ -11,6 +11,7 @@ A Next.js app for comparing real estate agents by commission, production, rating
 - Appwrite client wired for Account auth and agent collection reads, with demo data fallback before Appwrite is created.
 - OpenStreetMap and Leaflet by default, with no paid map API key required.
 - Railway deploy config through `railway.json`.
+- IDX-ready compliance hooks for future MLS/RESO listing feeds.
 
 ## Tech Stack
 
@@ -60,6 +61,10 @@ Open `http://localhost:3000`.
 Create the database and collections described in `database/appwrite-schema.md`.
 
 Until Appwrite has documents in the `agents` collection, the app uses local demo data from `src/lib/mockData.ts`.
+
+## IDX / MLS
+
+The app is IDX-ready but does not claim to display live MLS listings until a broker participant has MLS approval and vendor credentials. See `database/idx-integration.md` for the required environment variables, attribution fields, and MLS onboarding notes.
 
 ## Railway
 
