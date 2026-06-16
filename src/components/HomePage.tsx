@@ -9,7 +9,7 @@ import AgentList from './AgentList';
 import AuthPrompt from './AuthPrompt';
 import IdxComplianceNotice from './IdxComplianceNotice';
 import { useAppStore } from '@/store/appStore';
-import { getCurrentUser, listAgentsFromAppwrite, signOutCurrentUser } from '@/lib/appwrite';
+import { getCurrentUser, signOutCurrentUser } from '@/lib/appwrite';
 import { mockAgents } from '@/lib/mockData';
 
 const MapView = dynamic(() => import('./MapView'), { ssr: false });
@@ -36,11 +36,20 @@ export default function HomePage() {
       setCurrentUser(user);
 
       try {
-        const appwriteAgents = await listAgentsFromAppwrite();
-        if (appwriteAgents.length > 0) {
-          setAgents(appwriteAgents);
+        const response = await fetch('/api/agents');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.agents?.length > 0) {
+            setAgents(data.agents);
+            setDataSource('appwrite');
+            return;
+          }
+        }
+
+        if (!response.ok) {
+          setDataSource('demo');
+        } else {
           setDataSource('appwrite');
-          return;
         }
       } catch {
         setDataSource('demo');

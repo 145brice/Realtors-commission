@@ -1,4 +1,4 @@
-import { AgentClaim } from '@/types';
+import { Agent, AgentClaim, RecentSale, Review } from '@/types';
 
 const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || '';
 const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || '';
@@ -38,6 +38,30 @@ export async function listAgentClaims() {
   );
 
   return response.documents.map(mapAgentClaim);
+}
+
+export async function listPublicAgents() {
+  assertServerConfigured();
+  const response = await appwriteRequest<{ documents: Record<string, unknown>[] }>(
+    'GET',
+    `/databases/${databaseId}/collections/${agentsCollectionId}/documents`
+  );
+
+  return response.documents.map(mapAgentDocument);
+}
+
+export async function getPublicAgentBundle(agentId: string) {
+  assertServerConfigured();
+  const [agent, reviews, recentSales] = await Promise.all([
+    appwriteRequest<Record<string, unknown>>(
+      'GET',
+      `/databases/${databaseId}/collections/${agentsCollectionId}/documents/${agentId}`
+    ).then(mapAgentDocument),
+    listPublicReviews(agentId),
+    listPublicRecentSales(agentId),
+  ]);
+
+  return { agent, reviews, recentSales };
 }
 
 export async function upsertAgentClaim(claim: Partial<AgentClaim>) {
@@ -228,4 +252,82 @@ function mapAgentClaim(document: Record<string, unknown>) {
     created_at: String(document.$createdAt || ''),
     updated_at: String(document.$updatedAt || ''),
   } satisfies AgentClaim;
+}
+
+async function listPublicReviews(agentId: string) {
+  const query = encodeURIComponent(JSON.stringify({ method: 'equal', attribute: 'agent_id', values: [agentId] }));
+  const response = await appwriteRequest<{ documents: Record<string, unknown>[] }>(
+    'GET',
+    `/databases/${databaseId}/collections/${process.env.NEXT_PUBLIC_APPWRITE_REVIEWS_COLLECTION_ID || 'reviews'}/documents?queries[]=${query}`
+  );
+
+  return response.documents.map((document) => ({
+    id: String(document.$id || ''),
+    agent_id: String(document.agent_id || ''),
+    reviewer_name: String(document.reviewer_name || ''),
+    rating: Number(document.rating || 0),
+    comment: String(document.comment || ''),
+    property_type: String(document.property_type || ''),
+    transaction_type: (document.transaction_type || 'buy') as Review['transaction_type'],
+    created_at: String(document.created_at || document.$createdAt || ''),
+  })) satisfies Review[];
+}
+
+async function listPublicRecentSales(agentId: string) {
+  const query = encodeURIComponent(JSON.stringify({ method: 'equal', attribute: 'agent_id', values: [agentId] }));
+  const response = await appwriteRequest<{ documents: Record<string, unknown>[] }>(
+    'GET',
+    `/databases/${databaseId}/collections/${process.env.NEXT_PUBLIC_APPWRITE_RECENT_SALES_COLLECTION_ID || 'recent_sales'}/documents?queries[]=${query}`
+  );
+
+  return response.documents.map((document) => ({
+    id: String(document.$id || ''),
+    agent_id: String(document.agent_id || ''),
+    address: String(document.address || ''),
+    city: String(document.city || ''),
+    state: String(document.state || ''),
+    zip_code: String(document.zip_code || ''),
+    price: Number(document.price || 0),
+    property_type: String(document.property_type || ''),
+    bedrooms: Number(document.bedrooms || 0),
+    bathrooms: Number(document.bathrooms || 0),
+    square_feet: Number(document.square_feet || 0),
+    sold_date: String(document.sold_date || ''),
+    days_on_market: Number(document.days_on_market || 0),
+    image_url: String(document.image_url || ''),
+  })) satisfies RecentSale[];
+}
+
+function mapAgentDocument(document: Record<string, unknown>) {
+  return {
+    id: String(document.$id || ''),
+    name: String(document.name || ''),
+    email: String(document.email || ''),
+    phone: String(document.phone || ''),
+    photo_url: String(document.photo_url || ''),
+    brokerage: String(document.brokerage || ''),
+    commission_rate: Number(document.commission_rate || 0),
+    years_experience: Number(document.years_experience || 0),
+    total_sales: Number(document.total_sales || 0),
+    avg_days_on_market: Number(document.avg_days_on_market || 0),
+    rating: Number(document.rating || 0),
+    review_count: Number(document.review_count || 0),
+    bio: String(document.bio || ''),
+    specialties: Array.isArray(document.specialties) ? document.specialties.map(String) : [],
+    languages: Array.isArray(document.languages) ? document.languages.map(String) : [],
+    license_number: String(document.license_number || ''),
+    office_address: String(document.office_address || ''),
+    latitude: Number(document.latitude || 34.0522),
+    longitude: Number(document.longitude || -118.2437),
+    area_served: String(document.area_served || ''),
+    city: String(document.city || ''),
+    state: String(document.state || ''),
+    zip_codes: Array.isArray(document.zip_codes) ? document.zip_codes.map(String) : [],
+    neighborhoods: Array.isArray(document.neighborhoods) ? document.neighborhoods.map(String) : [],
+    service_radius_miles: Number(document.service_radius_miles || 25),
+    verified: Boolean(document.verified),
+    accepts_referrals: Boolean(document.accepts_referrals),
+    created_at: String(document.$createdAt || ''),
+    updated_at: String(document.$updatedAt || ''),
+  } satisfies Agent;
 }

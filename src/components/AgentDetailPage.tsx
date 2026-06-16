@@ -7,12 +7,7 @@ import { mockAgents, mockRecentSales, mockReviews } from '@/lib/mockData';
 import { formatCommission, formatCurrency, formatPhoneNumber, getInitials } from '@/lib/utils';
 import { useAppStore } from '@/store/appStore';
 import AuthPrompt from './AuthPrompt';
-import {
-  getAgentFromAppwrite,
-  getCurrentUser,
-  listRecentSalesFromAppwrite,
-  listReviewsFromAppwrite,
-} from '@/lib/appwrite';
+import { getCurrentUser } from '@/lib/appwrite';
 import { Agent, RecentSale, Review } from '@/types';
 
 interface AgentDetailPageProps {
@@ -38,20 +33,19 @@ export default function AgentDetailPage({ agentId }: AgentDetailPageProps) {
       const user = await getCurrentUser();
       setAuthenticated(Boolean(user));
 
-      const appwriteAgent = await getAgentFromAppwrite(agentId);
-      if (!appwriteAgent) {
+      const response = await fetch(`/api/agents/${agentId}`);
+      if (!response.ok) {
         return;
       }
 
-      setAgent(appwriteAgent);
+      const data = await response.json();
+      if (!data.agent) {
+        return;
+      }
 
-      const [appwriteReviews, appwriteRecentSales] = await Promise.all([
-        listReviewsFromAppwrite(appwriteAgent.id),
-        listRecentSalesFromAppwrite(appwriteAgent.id),
-      ]);
-
-      setReviews(appwriteReviews.length > 0 ? appwriteReviews : []);
-      setRecentSales(appwriteRecentSales.length > 0 ? appwriteRecentSales : []);
+      setAgent(data.agent);
+      setReviews(data.reviews || []);
+      setRecentSales(data.recentSales || []);
     }
 
     loadProfile();
