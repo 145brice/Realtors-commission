@@ -4,6 +4,7 @@ export interface Agent {
   email: string;
   phone: string;
   photo_url: string;
+  brokerage: string;
   commission_rate: number; // percentage (e.g., 1.5 for 1.5%)
   years_experience: number;
   total_sales: number;
@@ -18,6 +19,13 @@ export interface Agent {
   latitude: number;
   longitude: number;
   area_served: string; // e.g., 'Los Angeles, CA'
+  city: string;
+  state: string;
+  zip_codes: string[];
+  neighborhoods: string[];
+  service_radius_miles: number;
+  verified: boolean;
+  accepts_referrals: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -57,7 +65,9 @@ export interface SearchFilters {
   min_experience: number;
   specialties: string[];
   languages: string[];
-  sort_by: 'commission' | 'rating' | 'experience' | 'sales';
+  verified_only: boolean;
+  accepts_referrals_only: boolean;
+  sort_by: 'commission' | 'rating' | 'experience' | 'sales' | 'days_on_market';
   sort_order: 'asc' | 'desc';
 }
 
@@ -74,4 +84,5 @@ export interface SearchLocation {
   longitude: number;
   city?: string;
   state?: string;
+  zip?: string;
 }

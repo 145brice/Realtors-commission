@@ -2,63 +2,48 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/store/appStore';
-
-const mockLocations = [
-  'Los Angeles, CA',
-  'San Francisco, CA',
-  'San Diego, CA',
-  'Sacramento, CA',
-  'San Jose, CA',
-  'Beverly Hills, CA',
-  'Santa Monica, CA',
-  'Pasadena, CA',
-];
+import { detectSearchLocation, getSearchSuggestions } from '@/lib/search';
 
 export default function SearchBar() {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { setSearchLocation } = useAppStore();
+  const { agents, setSearchLocation, setSearchQuery } = useAppStore();
 
   useEffect(() => {
-    if (query.length > 2) {
-      const filtered = mockLocations.filter((loc) =>
-        loc.toLowerCase().includes(query.toLowerCase())
-      );
-      setSuggestions(filtered);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  }, [query]);
+    const nextSuggestions = getSearchSuggestions(query, agents);
+    setSuggestions(nextSuggestions);
+    setShowSuggestions(nextSuggestions.length > 0);
+  }, [agents, query]);
 
   const handleSearch = (location: string) => {
     setQuery(location);
     setShowSuggestions(false);
-    
-    // Mock coordinates for demonstration
-    setSearchLocation({
-      query: location,
-      latitude: 34.0522,
-      longitude: -118.2437,
-      city: location.split(',')[0],
-      state: location.split(',')[1]?.trim(),
-    });
+    setSearchQuery(location);
+    setSearchLocation(detectSearchLocation(location, agents));
   };
 
   return (
-    <div className="relative max-w-2xl">
+    <div className="relative max-w-5xl">
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSearchQuery(e.target.value);
+            setSearchLocation(detectSearchLocation(e.target.value, agents));
+          }}
           onFocus={() => query.length > 2 && setShowSuggestions(true)}
-          placeholder="Enter city, neighborhood, or ZIP code"
-          className="w-full px-4 py-3 pl-12 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              handleSearch(query);
+            }
+          }}
+          placeholder="Search ZIP, city, neighborhood, specialty, language, brokerage, license, or agent"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 pl-12 text-base focus:border-transparent focus:ring-2 focus:ring-primary-500"
         />
         <svg
           className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -82,7 +67,7 @@ export default function SearchBar() {
             <button
               key={index}
               onClick={() => handleSearch(location)}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+              className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-50 last:border-b-0"
             >
               <svg
                 className="w-5 h-5 text-gray-400"

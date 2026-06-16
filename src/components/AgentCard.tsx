@@ -2,8 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { MouseEvent } from 'react';
 import { Agent } from '@/types';
 import { formatCommission, getInitials } from '@/lib/utils';
+import { useAppStore } from '@/store/appStore';
 
 interface AgentCardProps {
   agent: Agent;
@@ -12,42 +14,62 @@ interface AgentCardProps {
 }
 
 export default function AgentCard({ agent, isSelected = false, onClick }: AgentCardProps) {
+  const { isAuthenticated, setAuthPromptOpen } = useAppStore();
+  const locked = !isAuthenticated;
+  const displayName = locked ? 'Verified local agent' : agent.name;
+
+  function handleLockedAction(event: MouseEvent) {
+    if (!locked) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setAuthPromptOpen(true);
+  }
+
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-lg border-2 p-4 cursor-pointer transition-all hover:shadow-lg ${
+      className={`cursor-pointer rounded-lg border-2 bg-white p-4 transition-all hover:shadow-lg ${
         isSelected ? 'border-primary-600 shadow-md' : 'border-gray-200'
       }`}
     >
-      <div className="flex gap-4">
-        {/* Agent Photo */}
+      <div className="flex flex-col gap-4 sm:flex-row">
         <div className="flex-shrink-0">
-          <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-200">
+          <div className="relative h-24 w-24 overflow-hidden rounded-lg bg-gray-200">
             {agent.photo_url ? (
               <Image
                 src={agent.photo_url}
-                alt={agent.name}
+                alt={displayName}
                 fill
-                className="object-cover"
+                className={`object-cover ${locked ? 'blur-md scale-110 grayscale' : ''}`}
                 sizes="96px"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-primary-100 text-primary-600 text-xl font-semibold">
+              <div className="flex h-full w-full items-center justify-center bg-primary-100 text-xl font-semibold text-primary-600">
                 {getInitials(agent.name)}
+              </div>
+            )}
+            {locked && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/30 text-xs font-semibold text-gray-900">
+                Locked
               </div>
             )}
           </div>
         </div>
 
-        {/* Agent Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
-              <Link href={`/agent/${agent.id}`}>
+              <Link href={`/agent/${agent.id}`} onClick={handleLockedAction}>
                 <h3 className="text-lg font-semibold text-gray-900 hover:text-primary-600">
-                  {agent.name}
+                  {displayName}
                 </h3>
               </Link>
+              <p className={`text-sm text-gray-600 ${locked ? 'blur-sm select-none' : ''}`}>
+                {agent.brokerage}
+              </p>
               <div className="flex items-center gap-2 mt-1">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
@@ -70,8 +92,7 @@ export default function AgentCard({ agent, isSelected = false, onClick }: AgentC
               </div>
             </div>
 
-            {/* Commission Badge */}
-            <div className="bg-green-50 px-3 py-1 rounded-lg border border-green-200">
+            <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-1">
               <span className="text-lg font-bold text-green-700">
                 {formatCommission(agent.commission_rate)}
               </span>
@@ -79,7 +100,6 @@ export default function AgentCard({ agent, isSelected = false, onClick }: AgentC
             </div>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-3 mb-3">
             <div>
               <div className="text-xs text-gray-500">Experience</div>
@@ -101,7 +121,6 @@ export default function AgentCard({ agent, isSelected = false, onClick }: AgentC
             </div>
           </div>
 
-          {/* Specialties */}
           <div className="flex flex-wrap gap-1 mb-3">
             {agent.specialties.slice(0, 3).map((specialty) => (
               <span
@@ -113,17 +132,30 @@ export default function AgentCard({ agent, isSelected = false, onClick }: AgentC
             ))}
           </div>
 
-          {/* Bio */}
           <p className="text-sm text-gray-600 line-clamp-2 mb-3">{agent.bio}</p>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <button className="flex-1 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
-              Contact Agent
+          <div className="mb-3 grid grid-cols-1 gap-2 text-xs text-gray-600 sm:grid-cols-2">
+            <span>Serves {agent.area_served}</span>
+            <span>{agent.zip_codes.slice(0, 4).join(', ')}</span>
+            <span>{agent.verified ? 'Verified profile' : 'Verification pending'}</span>
+            <span>{agent.service_radius_miles} mile radius</span>
+          </div>
+
+          <div className={`mb-3 text-sm text-gray-700 ${locked ? 'blur-sm select-none' : ''}`}>
+            {agent.phone} · {agent.email}
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              onClick={handleLockedAction}
+              className="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+            >
+              {locked ? 'Start free account' : 'Contact Agent'}
             </button>
             <Link
               href={`/agent/${agent.id}`}
-              className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              onClick={handleLockedAction}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               View Profile
             </Link>

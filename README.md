@@ -1,212 +1,86 @@
-# Agent Finder - Real Estate Agent Search Platform
+# Commission Scout
 
-A modern, production-ready web application that mimics Zillow's layout for finding and comparing real estate agents by commission rate. Built with Next.js 14, TypeScript, and Supabase.
+A Next.js app for comparing real estate agents by commission, production, rating, specialty, language, service area, and ZIP code. Agent identities and contact details are blurred until a visitor starts an account.
 
-![Agent Finder](https://img.shields.io/badge/Next.js-15-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8)
+## Features
 
-## 🎯 Features
+- Zillow-style split view with agent results beside an interactive map.
+- Account gate for agent names, photos, phone numbers, emails, brokerage, and profile access.
+- Search across ZIP codes, cities, neighborhoods, specialties, languages, brokerages, agent names, license numbers, phone, and email.
+- Filters for commission range, rating, experience, verified agents, referrals, specialties, languages, and sort order.
+- Appwrite client wired for Account auth and agent collection reads, with demo data fallback before Appwrite is created.
+- OpenStreetMap and Leaflet by default, with no paid map API key required.
+- Railway deploy config through `railway.json`.
 
-- **Zillow-like Layout**: Map on the right, agent list on the left, filters on top
-- **Commission-Based Sorting**: Find agents with the lowest commission rates (default: low to high)
-- **Interactive Map**: Leaflet-powered map with agent markers and clustering
-- **Advanced Filters**: Commission range, rating, experience, specialties, languages
-- **Agent Profiles**: Detailed pages with bio, reviews, recent sales, and commission breakdown
-- **Mobile Responsive**: Fully optimized for all screen sizes
-- **Real-time Search**: Location autocomplete with instant results
-- **Performance Optimized**: TanStack Query for efficient data fetching and caching
+## Tech Stack
 
-## 🚀 Tech Stack
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- Zustand
+- TanStack Query
+- Appwrite
+- Leaflet and OpenStreetMap
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: Zustand
-- **Data Fetching**: TanStack Query (React Query)
-- **Maps**: Leaflet with React Leaflet
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth (ready for implementation)
+## Setup
 
-## 📦 Installation
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Supabase account (free tier works)
-
-### Step 1: Clone and Install
+Install dependencies:
 
 ```bash
-cd "Realtor app"
 npm install
 ```
 
-### Step 2: Setup Supabase
-
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to Project Settings → API to find your credentials
-3. Copy `.env.local.example` to `.env.local`:
+Create `.env.local` from the example:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-4. Update `.env.local` with your Supabase credentials:
+Add your Appwrite values:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_appwrite_project_id
+NEXT_PUBLIC_APPWRITE_DATABASE_ID=your_appwrite_database_id
+NEXT_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID=agents
+NEXT_PUBLIC_APPWRITE_REVIEWS_COLLECTION_ID=reviews
+NEXT_PUBLIC_APPWRITE_RECENT_SALES_COLLECTION_ID=recent_sales
 ```
 
-### Step 3: Setup Database
-
-1. Open Supabase SQL Editor
-2. Run the schema creation script from `database/schema.sql`
-3. Run the seed data script from `database/seed.sql` to add 50 sample agents
-
-### Step 4: Run Development Server
+Run locally:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open `http://localhost:3000`.
 
-## 📁 Project Structure
+## Appwrite
 
-```
-src/
-├── app/
-│   ├── agent/[id]/          # Agent detail pages
-│   ├── layout.tsx           # Root layout
-│   ├── page.tsx             # Home page
-│   ├── providers.tsx        # React Query provider
-│   └── globals.css          # Global styles
-├── components/
-│   ├── HomePage.tsx         # Main search interface
-│   ├── SearchBar.tsx        # Location search
-│   ├── Filters.tsx          # Advanced filters
-│   ├── AgentList.tsx        # Agent list view
-│   ├── AgentCard.tsx        # Individual agent card
-│   ├── MapView.tsx          # Interactive map
-│   └── AgentDetailPage.tsx  # Agent profile page
-├── types/
-│   └── index.ts             # TypeScript interfaces
-├── store/
-│   └── appStore.ts          # Zustand global state
-└── lib/
-    ├── supabase.ts          # Supabase client
-    └── utils.ts             # Utility functions
+Create the database and collections described in `database/appwrite-schema.md`.
 
-database/
-├── schema.sql               # Database schema
-└── seed.sql                 # 50 sample agents
-```
+Until Appwrite has documents in the `agents` collection, the app uses local demo data from `src/lib/mockData.ts`.
 
-## 🎨 Key Components
+## Railway
 
-### HomePage
-Main interface with search, filters, agent list, and map view.
+The repository includes `railway.json`:
 
-### AgentCard
-Displays agent info including:
-- Photo and name
-- Commission rate (prominent badge)
-- Years of experience
-- Total sales
-- Average days on market
-- Star rating and review count
-- Specialties
-- Contact button
+- Build command: `npm run build`
+- Start command: `npm run start`
+- Builder: Nixpacks
 
-### MapView
-Interactive Leaflet map showing:
-- Agent markers with commission rates
-- Clickable popups with agent info
-- Automatic bounds adjustment
-- Selected agent highlighting
+After linking a Railway project, add the same Appwrite environment variables in Railway.
 
-### Filters
-Advanced filtering by:
-- Commission range (0-3%)
-- Minimum rating
-- Minimum experience
-- Specialties (Residential, Luxury, Commercial, etc.)
-- Languages
-- Sort options (commission, rating, experience, sales)
+## Mapping Cost Strategy
 
-### AgentDetailPage
-Comprehensive agent profile with:
-- Overview tab: Bio, specialties, languages, commission breakdown
-- Reviews tab: Client testimonials with ratings
-- Recent Sales tab: Properties sold with photos and details
+The current implementation uses Leaflet with OpenStreetMap tiles, which avoids a paid map API key. To reduce cost and clutter as data grows, the map caps rendered markers at 250 per view. For a production-scale national agent database, add server-side bounds queries and clustering before showing thousands of pins.
 
-## 🔧 Configuration
+## Important Files
 
-### Tailwind Colors
-Primary color is defined in `tailwind.config.ts`. Modify the `primary` color palette to match your brand.
-
-### Environment Variables
-- `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key
-
-## 📊 Database Schema
-
-### Tables
-- **agents**: Core agent information and statistics
-- **reviews**: Client reviews and ratings
-- **recent_sales**: Property sales data
-
-See `database/schema.sql` for complete schema.
-
-## 🚢 Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Import project in [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Deploy!
-
-### Other Platforms
-
-The app works on any platform that supports Next.js:
-- Netlify
-- Railway
-- AWS Amplify
-- Self-hosted with Docker
-
-## 🔒 Security
-
-- Row Level Security (RLS) is enabled on Supabase tables
-- Environment variables for sensitive data
-- Input validation and sanitization
-- CORS configured properly
-
-## 🎯 Future Enhancements
-
-- [ ] User authentication for agents
-- [ ] Agent dashboard for managing listings
-- [ ] Real-time chat between clients and agents
-- [ ] Email notifications
-- [ ] Payment integration for featured listings
-- [ ] Advanced analytics dashboard
-- [ ] Multi-language support
-- [ ] Progressive Web App (PWA)
-- [ ] Agent comparison tool
-- [ ] Save favorite agents
-
-## 📝 License
-
-MIT License - feel free to use this project for personal or commercial purposes.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## 📧 Support
-
-For questions or issues, please open a GitHub issue.
-
----
-
-Built with ❤️ using Next.js and Supabase
+- `src/components/HomePage.tsx`: main search layout
+- `src/components/AgentCard.tsx`: locked agent cards
+- `src/components/AuthPrompt.tsx`: Appwrite email account/sign-in modal
+- `src/components/MapView.tsx`: Leaflet map
+- `src/lib/appwrite.ts`: Appwrite client and agent loading
+- `src/lib/search.ts`: search normalization, matching, filtering, sorting
+- `database/appwrite-schema.md`: Appwrite collection setup
