@@ -1,16 +1,28 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { createEmailAccount, createEmailSession } from '@/lib/appwrite';
+import { AccountRole } from '@/types';
 
 export default function AuthPrompt() {
-  const { authPromptOpen, setAuthPromptOpen, setAuthenticated } = useAppStore();
+  const {
+    authPromptOpen,
+    authRoleIntent,
+    setAuthPromptOpen,
+    setAuthRoleIntent,
+    setCurrentUser,
+  } = useAppStore();
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
+  const [role, setRole] = useState<AccountRole>(authRoleIntent);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  useEffect(() => {
+    setRole(authRoleIntent);
+  }, [authRoleIntent]);
 
   if (!authPromptOpen) {
     return null;
@@ -21,12 +33,16 @@ export default function AuthPrompt() {
     setStatus('loading');
 
     try {
+      let user;
       if (mode === 'signup') {
-        await createEmailAccount(email, password, name || email);
+        user = await createEmailAccount(email, password, name || email, role);
+      } else {
+        await createEmailSession(email, password);
+        const { getCurrentUser } = await import('@/lib/appwrite');
+        user = await getCurrentUser();
       }
 
-      await createEmailSession(email, password);
-      setAuthenticated(true);
+      setCurrentUser(user || null);
     } catch {
       setStatus('error');
     }
@@ -44,7 +60,7 @@ export default function AuthPrompt() {
               Unlock agent details
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              Start an account during launch to unlock names, photos, phone numbers, and emails at no cost.
+              Start as a buyer/seller, or create an agent account to claim and manage your profile.
             </p>
           </div>
           <button
@@ -55,6 +71,33 @@ export default function AuthPrompt() {
             X
           </button>
         </div>
+
+        {mode === 'signup' && (
+          <div className="mb-4 grid grid-cols-2 rounded-lg border border-gray-200 bg-gray-50 p-1">
+            <button
+              onClick={() => {
+                setRole('public');
+                setAuthRoleIntent('public');
+              }}
+              className={`rounded-md px-3 py-2 text-sm font-medium ${
+                role === 'public' ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-600'
+              }`}
+            >
+              Buyer/Seller
+            </button>
+            <button
+              onClick={() => {
+                setRole('agent');
+                setAuthRoleIntent('agent');
+              }}
+              className={`rounded-md px-3 py-2 text-sm font-medium ${
+                role === 'agent' ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-600'
+              }`}
+            >
+              Agent
+            </button>
+          </div>
+        )}
 
         <div className="mb-4 grid grid-cols-2 rounded-lg border border-gray-200 bg-gray-50 p-1">
           <button
@@ -103,7 +146,7 @@ export default function AuthPrompt() {
           />
           {status === 'error' && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              Appwrite is not configured yet, or those credentials did not work. You can still browse locked results.
+              Those credentials did not work, or this account already has an active session.
             </p>
           )}
           <button

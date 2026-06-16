@@ -2,19 +2,29 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import SearchBar from './SearchBar';
 import Filters from './Filters';
 import AgentList from './AgentList';
 import AuthPrompt from './AuthPrompt';
 import IdxComplianceNotice from './IdxComplianceNotice';
 import { useAppStore } from '@/store/appStore';
-import { getCurrentUser, listAgentsFromAppwrite } from '@/lib/appwrite';
+import { getCurrentUser, listAgentsFromAppwrite, signOutCurrentUser } from '@/lib/appwrite';
 import { mockAgents } from '@/lib/mockData';
 
 const MapView = dynamic(() => import('./MapView'), { ssr: false });
 
 export default function HomePage() {
-  const { setAgents, isMapView, setAuthenticated, setAuthPromptOpen, isAuthenticated } = useAppStore();
+  const {
+    setAgents,
+    isMapView,
+    setCurrentUser,
+    setAuthenticated,
+    setAuthPromptOpen,
+    setAuthRoleIntent,
+    currentUser,
+    isAuthenticated,
+  } = useAppStore();
   const [mounted, setMounted] = useState(false);
   const [dataSource, setDataSource] = useState<'appwrite' | 'demo'>('demo');
 
@@ -23,7 +33,7 @@ export default function HomePage() {
 
     async function loadAgents() {
       const user = await getCurrentUser();
-      setAuthenticated(Boolean(user));
+      setCurrentUser(user);
 
       try {
         const appwriteAgents = await listAgentsFromAppwrite();
@@ -40,7 +50,7 @@ export default function HomePage() {
     }
 
     loadAgents();
-  }, [setAgents, setAuthenticated]);
+  }, [setAgents, setAuthenticated, setCurrentUser]);
 
   if (!mounted) {
     return null;
@@ -60,12 +70,38 @@ export default function HomePage() {
                 Free for a limited time while we launch.
               </p>
             </div>
-            <button
-              onClick={() => (isAuthenticated ? setAuthenticated(false) : setAuthPromptOpen(true))}
-              className="w-full rounded-lg bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 lg:w-auto"
-            >
-              {isAuthenticated ? 'Preview locked view' : 'Start free account'}
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Link
+                href="/dashboard"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-center text-sm font-semibold text-gray-800 hover:bg-gray-50"
+              >
+                Agent dashboard
+              </Link>
+              {currentUser?.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-center text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                >
+                  Admin
+                </Link>
+              )}
+              <button
+                onClick={async () => {
+                  if (isAuthenticated) {
+                    await signOutCurrentUser();
+                    setAuthenticated(false);
+                    setCurrentUser(null);
+                    return;
+                  }
+
+                  setAuthRoleIntent('public');
+                  setAuthPromptOpen(true);
+                }}
+                className="w-full rounded-lg bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 sm:w-auto"
+              >
+                {isAuthenticated ? `Sign out ${currentUser?.role || 'public'}` : 'Start free account'}
+              </button>
+            </div>
           </div>
           <SearchBar />
           {dataSource === 'demo' && (

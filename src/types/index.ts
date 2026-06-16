@@ -30,6 +30,42 @@ export interface Agent {
   updated_at: string;
 }
 
+export type AccountRole = 'public' | 'agent' | 'admin';
+
+export interface UserSession {
+  id: string;
+  name: string;
+  email: string;
+  role: AccountRole;
+}
+
+export interface AgentClaim {
+  id: string;
+  user_id: string;
+  user_email: string;
+  agent_id?: string;
+  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  name: string;
+  email: string;
+  phone: string;
+  photo_url: string;
+  brokerage: string;
+  commission_rate: number;
+  bio: string;
+  specialties: string[];
+  languages: string[];
+  license_number: string;
+  office_address: string;
+  area_served: string;
+  city: string;
+  state: string;
+  zip_codes: string[];
+  neighborhoods: string[];
+  admin_note?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Review {
   id: string;
   agent_id: string;

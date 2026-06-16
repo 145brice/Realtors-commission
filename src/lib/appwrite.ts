@@ -1,5 +1,5 @@
 import { Account, Client, Databases, ID, Models, Query } from 'appwrite';
-import { Agent, RecentSale, Review } from '@/types';
+import { AccountRole, Agent, RecentSale, Review, UserSession } from '@/types';
 
 type AgentDocument = Models.Document &
   Omit<Agent, 'id' | 'created_at' | 'updated_at' | 'service_radius_miles'> &
@@ -20,6 +20,11 @@ export const appwriteConfig = {
   recentSalesCollectionId: process.env.NEXT_PUBLIC_APPWRITE_RECENT_SALES_COLLECTION_ID || 'recent_sales',
 };
 
+const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+
 export const appwriteClient = new Client();
 
 if (endpoint && projectId) {
@@ -37,16 +42,52 @@ export async function createEmailSession(email: string, password: string) {
   return account.createEmailPasswordSession(email, password);
 }
 
-export async function createEmailAccount(email: string, password: string, name: string) {
-  return account.create(ID.unique(), email, password, name);
+export async function createEmailAccount(
+  email: string,
+  password: string,
+  name: string,
+  role: AccountRole
+) {
+  await account.create(ID.unique(), email, password, name);
+  await account.createEmailPasswordSession(email, password);
+  const user = await account.updatePrefs({ role });
+  return mapUserSession(user);
 }
 
 export async function getCurrentUser() {
   try {
-    return await account.get();
+    const user = await account.get();
+    return mapUserSession(user);
   } catch {
     return null;
   }
+}
+
+export async function updateCurrentUserRole(role: AccountRole) {
+  const user = await account.updatePrefs({ role });
+  return mapUserSession(user);
+}
+
+export async function signOutCurrentUser() {
+  try {
+    await account.deleteSession('current');
+  } catch {
+    return;
+  }
+}
+
+function mapUserSession(user: Models.User<Models.Preferences>): UserSession {
+  const email = user.email.toLowerCase();
+  const prefs = user.prefs as Models.Preferences & { role?: AccountRole };
+  const preferredRole = prefs.role;
+  const role = adminEmails.includes(email) ? 'admin' : preferredRole || 'public';
+
+  return {
+    id: user.$id,
+    name: user.name,
+    email: user.email,
+    role,
+  };
 }
 
 export async function listAgentsFromAppwrite() {

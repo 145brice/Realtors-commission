@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Agent, SearchFilters, MapBounds, SearchLocation } from '@/types';
+import { AccountRole, Agent, SearchFilters, MapBounds, SearchLocation, UserSession } from '@/types';
 import { filterAgents } from '@/lib/search';
 
 interface AppState {
@@ -12,6 +12,8 @@ interface AppState {
   mapBounds: MapBounds | null;
   isMapView: boolean;
   isAuthenticated: boolean;
+  currentUser: UserSession | null;
+  authRoleIntent: AccountRole;
   authPromptOpen: boolean;
   
   setAgents: (agents: Agent[]) => void;
@@ -22,6 +24,8 @@ interface AppState {
   setMapBounds: (bounds: MapBounds | null) => void;
   setIsMapView: (isMapView: boolean) => void;
   setAuthenticated: (isAuthenticated: boolean) => void;
+  setCurrentUser: (currentUser: UserSession | null) => void;
+  setAuthRoleIntent: (authRoleIntent: AccountRole) => void;
   setAuthPromptOpen: (authPromptOpen: boolean) => void;
   resetFilters: () => void;
 }
@@ -49,6 +53,8 @@ export const useAppStore = create<AppState>((set) => ({
   mapBounds: null,
   isMapView: true,
   isAuthenticated: false,
+  currentUser: null,
+  authRoleIntent: 'public',
   authPromptOpen: false,
   
   setAgents: (agents) => set((state) => ({
@@ -68,6 +74,12 @@ export const useAppStore = create<AppState>((set) => ({
   setMapBounds: (mapBounds) => set({ mapBounds }),
   setIsMapView: (isMapView) => set({ isMapView }),
   setAuthenticated: (isAuthenticated) => set({ isAuthenticated, authPromptOpen: false }),
+  setCurrentUser: (currentUser) => set({
+    currentUser,
+    isAuthenticated: Boolean(currentUser),
+    authPromptOpen: false,
+  }),
+  setAuthRoleIntent: (authRoleIntent) => set({ authRoleIntent }),
   setAuthPromptOpen: (authPromptOpen) => set({ authPromptOpen }),
   resetFilters: () => set((state) => ({
     filters: defaultFilters,

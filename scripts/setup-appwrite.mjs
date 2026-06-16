@@ -14,6 +14,8 @@ const agentsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID
 const reviewsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_REVIEWS_COLLECTION_ID || 'reviews';
 const recentSalesCollectionId =
   process.env.NEXT_PUBLIC_APPWRITE_RECENT_SALES_COLLECTION_ID || 'recent_sales';
+const agentClaimsCollectionId =
+  process.env.NEXT_PUBLIC_APPWRITE_AGENT_CLAIMS_COLLECTION_ID || 'agent_claims';
 
 const headers = {
   'Content-Type': 'application/json',
@@ -84,9 +86,11 @@ await ensureDatabase();
 await ensureCollection(agentsCollectionId, 'Agents');
 await ensureCollection(reviewsCollectionId, 'Reviews');
 await ensureCollection(recentSalesCollectionId, 'Recent Sales');
+await ensureCollection(agentClaimsCollectionId, 'Agent Claims');
 await ensureAgentAttributes();
 await ensureReviewAttributes();
 await ensureRecentSaleAttributes();
+await ensureAgentClaimAttributes();
 await ensureAgentIndexes();
 await seedAgents();
 await seedReviews();
@@ -261,6 +265,38 @@ async function ensureRecentSaleAttributes() {
   }
 
   await waitForAttributes(recentSalesCollectionId, attributes.map(([, key]) => key));
+}
+
+async function ensureAgentClaimAttributes() {
+  const attributes = [
+    ['string', 'user_id', { size: 80, required: true }],
+    ['email', 'user_email', { required: true }],
+    ['string', 'agent_id', { size: 80, required: false }],
+    ['string', 'status', { size: 20, required: true }],
+    ['string', 'name', { size: 120, required: true }],
+    ['email', 'email', { required: true }],
+    ['string', 'phone', { size: 40, required: true }],
+    ['url', 'photo_url', { required: false }],
+    ['string', 'brokerage', { size: 120, required: true }],
+    ['float', 'commission_rate', { required: true }],
+    ['string', 'bio', { size: 1000, required: true }],
+    ['string', 'specialties', { size: 80, required: false, array: true }],
+    ['string', 'languages', { size: 80, required: false, array: true }],
+    ['string', 'license_number', { size: 80, required: true }],
+    ['string', 'office_address', { size: 240, required: true }],
+    ['string', 'area_served', { size: 160, required: true }],
+    ['string', 'city', { size: 100, required: true }],
+    ['string', 'state', { size: 40, required: true }],
+    ['string', 'zip_codes', { size: 12, required: false, array: true }],
+    ['string', 'neighborhoods', { size: 120, required: false, array: true }],
+    ['string', 'admin_note', { size: 1000, required: false }],
+  ];
+
+  for (const [type, key, options] of attributes) {
+    await createAttribute(agentClaimsCollectionId, type, key, options);
+  }
+
+  await waitForAttributes(agentClaimsCollectionId, attributes.map(([, key]) => key));
 }
 
 async function createAttribute(collectionId, type, key, options) {
@@ -453,6 +489,7 @@ function writeEnv() {
     NEXT_PUBLIC_APPWRITE_AGENTS_COLLECTION_ID: agentsCollectionId,
     NEXT_PUBLIC_APPWRITE_REVIEWS_COLLECTION_ID: reviewsCollectionId,
     NEXT_PUBLIC_APPWRITE_RECENT_SALES_COLLECTION_ID: recentSalesCollectionId,
+    NEXT_PUBLIC_APPWRITE_AGENT_CLAIMS_COLLECTION_ID: agentClaimsCollectionId,
     APPWRITE_API_KEY: apiKey,
   };
 
