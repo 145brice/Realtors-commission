@@ -23,6 +23,11 @@ export interface Agent {
   state: string;
   zip_codes: string[];
   neighborhoods: string[];
+  idx_feed_url?: string;
+  idx_provider?: string;
+  mls_name?: string;
+  mls_participant_id?: string;
+  mls_office_id?: string;
   service_radius_miles: number;
   verified: boolean;
   accepts_referrals: boolean;
@@ -61,6 +66,11 @@ export interface AgentClaim {
   state: string;
   zip_codes: string[];
   neighborhoods: string[];
+  idx_feed_url?: string;
+  idx_provider?: string;
+  mls_name?: string;
+  mls_participant_id?: string;
+  mls_office_id?: string;
   admin_note?: string;
   created_at: string;
   updated_at: string;

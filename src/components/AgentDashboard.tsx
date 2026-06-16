@@ -24,6 +24,11 @@ const emptyClaim: Partial<AgentClaim> = {
   state: '',
   zip_codes: [],
   neighborhoods: [],
+  idx_feed_url: '',
+  idx_provider: '',
+  mls_name: '',
+  mls_participant_id: '',
+  mls_office_id: '',
 };
 
 export default function AgentDashboard() {
@@ -78,6 +83,11 @@ export default function AgentDashboard() {
         neighborhoods: parseList(claim.neighborhoods),
         specialties: parseList(claim.specialties),
         languages: parseList(claim.languages),
+        idx_feed_url: claim.idx_feed_url || '',
+        idx_provider: claim.idx_provider || '',
+        mls_name: claim.mls_name || '',
+        mls_participant_id: claim.mls_participant_id || '',
+        mls_office_id: claim.mls_office_id || '',
       }),
     });
 
@@ -151,6 +161,20 @@ export default function AgentDashboard() {
             <Field label="Neighborhoods" value={formatList(claim.neighborhoods)} onChange={(value) => setClaim({ ...claim, neighborhoods: parseList(value) })} />
             <Field label="Specialties" value={formatList(claim.specialties)} onChange={(value) => setClaim({ ...claim, specialties: parseList(value) })} />
             <Field label="Languages" value={formatList(claim.languages)} onChange={(value) => setClaim({ ...claim, languages: parseList(value) })} />
+          </div>
+
+          <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
+            <h3 className="font-semibold text-gray-950">IDX / MLS feed</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Optional for now. Add your IDX feed URL or MLS participant details so we can verify compatibility before listings go live.
+            </p>
+            <div className="mt-4 space-y-4">
+              <Field label="IDX feed URL" value={claim.idx_feed_url} onChange={(value) => setClaim({ ...claim, idx_feed_url: value })} />
+              <Field label="IDX provider" value={claim.idx_provider} onChange={(value) => setClaim({ ...claim, idx_provider: value })} />
+              <Field label="MLS name" value={claim.mls_name} onChange={(value) => setClaim({ ...claim, mls_name: value })} />
+              <Field label="MLS participant ID" value={claim.mls_participant_id} onChange={(value) => setClaim({ ...claim, mls_participant_id: value })} />
+              <Field label="MLS office ID" value={claim.mls_office_id} onChange={(value) => setClaim({ ...claim, mls_office_id: value })} />
+            </div>
           </div>
 
           {message && (

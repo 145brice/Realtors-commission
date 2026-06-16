@@ -214,6 +214,11 @@ async function ensureAgentAttributes() {
     ['string', 'state', { size: 40, required: true }],
     ['string', 'zip_codes', { size: 12, required: false, array: true }],
     ['string', 'neighborhoods', { size: 120, required: false, array: true }],
+    ['url', 'idx_feed_url', { required: false }],
+    ['string', 'idx_provider', { size: 80, required: false }],
+    ['string', 'mls_name', { size: 120, required: false }],
+    ['string', 'mls_participant_id', { size: 120, required: false }],
+    ['string', 'mls_office_id', { size: 120, required: false }],
     ['boolean', 'verified', { required: false }],
     ['boolean', 'accepts_referrals', { required: false }],
   ];
@@ -289,6 +294,11 @@ async function ensureAgentClaimAttributes() {
     ['string', 'state', { size: 40, required: true }],
     ['string', 'zip_codes', { size: 12, required: false, array: true }],
     ['string', 'neighborhoods', { size: 120, required: false, array: true }],
+    ['url', 'idx_feed_url', { required: false }],
+    ['string', 'idx_provider', { size: 80, required: false }],
+    ['string', 'mls_name', { size: 120, required: false }],
+    ['string', 'mls_participant_id', { size: 120, required: false }],
+    ['string', 'mls_office_id', { size: 120, required: false }],
     ['string', 'admin_note', { size: 1000, required: false }],
   ];
 
@@ -335,17 +345,17 @@ async function createAttribute(collectionId, type, key, options) {
 
 async function waitForAttributes(collectionId, keys) {
   for (let attempt = 0; attempt < 30; attempt += 1) {
-    const response = await request(
-      'GET',
-      `/databases/${databaseId}/collections/${collectionId}/attributes`
-    );
-    const available = new Set(
-      response.attributes
-        .filter((attribute) => ['available', 'stuck'].includes(attribute.status))
-        .map((attribute) => attribute.key)
+    const statuses = await Promise.all(
+      keys.map(async (key) => {
+        const response = await request(
+          'GET',
+          `/databases/${databaseId}/collections/${collectionId}/attributes/${key}`
+        );
+        return response.status;
+      })
     );
 
-    if (keys.every((key) => available.has(key))) {
+    if (statuses.every((status) => ['available', 'stuck'].includes(status))) {
       return;
     }
 

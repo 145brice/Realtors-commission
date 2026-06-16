@@ -154,6 +154,17 @@ export default function AdminDashboard() {
                 <p>Languages: {claim.languages.join(', ') || 'None listed'}</p>
               </div>
 
+              <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-gray-700">
+                <h4 className="font-semibold text-gray-950">IDX / MLS feed</h4>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  <p>Feed URL: {claim.idx_feed_url || 'Not provided'}</p>
+                  <p>Provider: {claim.idx_provider || 'Not provided'}</p>
+                  <p>MLS: {claim.mls_name || 'Not provided'}</p>
+                  <p>Participant ID: {claim.mls_participant_id || 'Not provided'}</p>
+                  <p>Office ID: {claim.mls_office_id || 'Not provided'}</p>
+                </div>
+              </div>
+
               <div className="mt-5 flex flex-col gap-2 sm:flex-row">
                 <button
                   disabled={status === 'working' || claim.status === 'approved'}
