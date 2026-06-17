@@ -8,14 +8,17 @@ import { formatCommission, formatCurrency, formatPhoneNumber, getInitials } from
 import { useAppStore } from '@/store/appStore';
 import AuthPrompt from './AuthPrompt';
 import { getCurrentUser } from '@/lib/appwrite';
-import { Agent, RecentSale, Review } from '@/types';
+import { Agent, IdxListing, RecentSale, Review } from '@/types';
+import IdxListingCard from './IdxListingCard';
 
 interface AgentDetailPageProps {
   agentId: string;
 }
 
 export default function AgentDetailPage({ agentId }: AgentDetailPageProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'sales'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'sales' | 'listings'>('overview');
+  const [listings, setListings] = useState<IdxListing[]>([]);
+  const [listingsConnected, setListingsConnected] = useState<boolean | null>(null);
   const { isAuthenticated, setAuthPromptOpen, setAuthenticated } = useAppStore();
   const fallbackAgent = useMemo(
     () => mockAgents.find((candidate) => candidate.id === agentId) || mockAgents[0],
@@ -46,6 +49,13 @@ export default function AgentDetailPage({ agentId }: AgentDetailPageProps) {
       setAgent(data.agent);
       setReviews(data.reviews || []);
       setRecentSales(data.recentSales || []);
+
+      const listingsRes = await fetch(`/api/agents/${agentId}/listings`);
+      if (listingsRes.ok) {
+        const listingsData = await listingsRes.json();
+        setListings(listingsData.listings || []);
+        setListingsConnected(listingsData.connected ?? false);
+      }
     }
 
     loadProfile();
@@ -137,6 +147,7 @@ export default function AgentDetailPage({ agentId }: AgentDetailPageProps) {
                 ['overview', 'Overview'],
                 ['reviews', `Reviews (${agent.review_count})`],
                 ['sales', 'Recent Sales'],
+                ['listings', listings.length > 0 ? `Active Listings (${listings.length})` : 'Active Listings'],
               ].map(([id, label]) => (
                 <button
                   key={id}
@@ -190,6 +201,36 @@ export default function AgentDetailPage({ agentId }: AgentDetailPageProps) {
                     <p className="text-gray-700">{review.comment}</p>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {activeTab === 'listings' && (
+              <div>
+                {listingsConnected && listings.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {listings.map((listing) => (
+                      <IdxListingCard key={listing.id} listing={listing} />
+                    ))}
+                  </div>
+                ) : listingsConnected && listings.length === 0 ? (
+                  <p className="py-12 text-center text-sm text-gray-500">
+                    No active listings found in this agent&apos;s MLS feed right now.
+                  </p>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-gray-300 py-16 text-center">
+                    <p className="text-base font-medium text-gray-700">MLS feed not connected</p>
+                    <p className="mt-2 text-sm text-gray-500">
+                      This agent hasn&apos;t connected an IDX feed yet. Active listings will
+                      appear here once they do.
+                    </p>
+                    <a
+                      href="/dashboard"
+                      className="mt-4 inline-block rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
+                    >
+                      Are you this agent? Connect your feed →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 

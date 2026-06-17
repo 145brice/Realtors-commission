@@ -1,0 +1,31 @@
+[
+  {
+    "id": "ca-dre-02000001",
+    "name": "Real Agent Name",
+    "email": "agent@theirbrokerage.com",
+    "phone": "3105550000",
+    "photo_url": "https://example.com/headshot.jpg",
+    "brokerage": "Their Brokerage",
+    "commission_rate": 2.5,
+    "years_experience": 5,
+    "total_sales": 40,
+    "avg_days_on_market": 30,
+    "rating": 0,
+    "review_count": 0,
+    "bio": "Short professional bio.",
+    "specialties": ["Residential"],
+    "languages": ["English"],
+    "license_number": "CA-DRE-02000001",
+    "office_address": "100 Main St, Los Angeles, CA 90012",
+    "latitude": 34.0522,
+    "longitude": -118.2437,
+    "area_served": "Los Angeles County",
+    "city": "Los Angeles",
+    "state": "CA",
+    "zip_codes": ["90012"],
+    "neighborhoods": ["Downtown Los Angeles"],
+    "service_radius_miles": 20,
+    "verified": true,
+    "accepts_referrals": true
+  }
+]

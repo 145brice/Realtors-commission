@@ -35,6 +35,10 @@ export default function HomePage() {
       const user = await getCurrentUser();
       setCurrentUser(user);
 
+      // Only fall back to bundled mock agents during local development.
+      // In production we never show fake agents — an empty result stays empty.
+      const allowMockFallback = process.env.NODE_ENV !== 'production';
+
       try {
         const response = await fetch('/api/agents');
         if (response.ok) {
@@ -44,18 +48,15 @@ export default function HomePage() {
             setDataSource('appwrite');
             return;
           }
-        }
-
-        if (!response.ok) {
-          setDataSource('demo');
+          setDataSource(allowMockFallback ? 'demo' : 'appwrite');
         } else {
-          setDataSource('appwrite');
+          setDataSource('demo');
         }
       } catch {
         setDataSource('demo');
       }
 
-      setAgents(mockAgents);
+      setAgents(allowMockFallback ? mockAgents : []);
     }
 
     loadAgents();
@@ -134,6 +135,18 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      <footer className="border-t border-gray-200 bg-white px-4 py-2 text-center text-xs text-gray-500 lg:px-6">
+        Commission Scout is an agent directory, not a brokerage. Verify commission terms directly
+        with each agent.{' '}
+        <Link href="/terms" className="font-medium text-gray-700 hover:underline">
+          Terms
+        </Link>{' '}
+        ·{' '}
+        <Link href="/privacy" className="font-medium text-gray-700 hover:underline">
+          Privacy
+        </Link>
+      </footer>
 
       <AuthPrompt />
     </div>
