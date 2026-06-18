@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { approveAgentClaim, isAdminEmail, rejectAgentClaim } from '@/lib/appwriteServer';
+import { approveAgentClaim, rejectAgentClaim, verifyAdminRequest } from '@/lib/appwriteServer';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
-    const body = await request.json();
-
-    if (!isAdminEmail(body.admin_email || '')) {
+    const admin = await verifyAdminRequest(request);
+    if (!admin) {
       return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
     }
+
+    const { id } = await params;
+    const body = await request.json();
 
     const claim =
       body.status === 'approved'

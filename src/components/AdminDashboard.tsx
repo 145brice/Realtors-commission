@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import AuthPrompt from './AuthPrompt';
-import { getCurrentUser } from '@/lib/appwrite';
+import { account, getCurrentUser } from '@/lib/appwrite';
 import { useAppStore } from '@/store/appStore';
 import { AgentClaim } from '@/types';
 
@@ -31,15 +31,25 @@ export default function AdminDashboard() {
         return;
       }
 
-      await loadClaims(user.email);
+      await loadClaims();
     }
 
     load();
   }, [setAuthPromptOpen, setAuthRoleIntent, setCurrentUser]);
 
-  async function loadClaims(email: string) {
+  async function getAuthHeader(): Promise<Record<string, string>> {
+    try {
+      const jwt = await account.createJWT();
+      return { Authorization: `Bearer ${jwt.jwt}` };
+    } catch {
+      return {};
+    }
+  }
+
+  async function loadClaims() {
     setStatus('loading');
-    const response = await fetch(`/api/agent-claims?email=${encodeURIComponent(email)}`);
+    const authHeader = await getAuthHeader();
+    const response = await fetch('/api/agent-claims', { headers: authHeader });
 
     if (!response.ok) {
       setStatus('error');
@@ -56,12 +66,12 @@ export default function AdminDashboard() {
     if (!currentUser) return;
 
     setStatus('working');
+    const authHeader = await getAuthHeader();
     const response = await fetch(`/api/agent-claims/${claim.id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader },
       body: JSON.stringify({
         status: nextStatus,
-        admin_email: currentUser.email,
         admin_note:
           nextStatus === 'approved'
             ? 'Approved and published as verified.'
@@ -75,7 +85,7 @@ export default function AdminDashboard() {
       return;
     }
 
-    await loadClaims(currentUser.email);
+    await loadClaims();
   }
 
   return (

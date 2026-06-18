@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { mockAgents, mockRecentSales, mockReviews } from '@/lib/mockData';
@@ -8,6 +8,7 @@ import { formatCommission, formatCurrency, formatPhoneNumber, getInitials } from
 import { useAppStore } from '@/store/appStore';
 import AuthPrompt from './AuthPrompt';
 import { getCurrentUser } from '@/lib/appwrite';
+import { account } from '@/lib/appwrite';
 import { Agent, IdxListing, RecentSale, Review } from '@/types';
 import IdxListingCard from './IdxListingCard';
 
@@ -185,22 +186,33 @@ export default function AgentDetailPage({ agentId }: AgentDetailPageProps) {
             )}
 
             {activeTab === 'reviews' && (
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
-                    <div className="mb-2 flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{review.reviewer_name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {review.property_type} · {review.transaction_type} ·{' '}
-                          {new Date(review.created_at).toLocaleDateString()}
-                        </p>
+              <div className="space-y-6">
+                <ReviewForm
+                  agentId={agentId}
+                  isAuthenticated={isAuthenticated}
+                  onSubmitted={(review) => setReviews((prev) => [review, ...prev])}
+                  onSignInRequired={() => setAuthPromptOpen(true)}
+                />
+                <div className="space-y-4">
+                  {reviews.length === 0 && (
+                    <p className="text-sm text-gray-500">No reviews yet — be the first.</p>
+                  )}
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                      <div className="mb-2 flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{review.reviewer_name}</h3>
+                          <p className="text-sm text-gray-600">
+                            {review.property_type} · {review.transaction_type} ·{' '}
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className="text-sm font-semibold text-yellow-600">{review.rating}/5</span>
                       </div>
-                      <span className="text-sm font-semibold text-yellow-600">{review.rating}/5</span>
+                      <p className="text-gray-700">{review.comment}</p>
                     </div>
-                    <p className="text-gray-700">{review.comment}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
@@ -277,6 +289,138 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="text-xl font-bold text-gray-900">{value}</div>
       <div className="text-sm text-gray-600">{label}</div>
     </div>
+  );
+}
+
+function ReviewForm({
+  agentId,
+  isAuthenticated,
+  onSubmitted,
+  onSignInRequired,
+}: {
+  agentId: string;
+  isAuthenticated: boolean;
+  onSubmitted: (review: Review) => void;
+  onSignInRequired: () => void;
+}) {
+  const [form, setForm] = useState({
+    reviewer_name: '',
+    rating: 5,
+    comment: '',
+    property_type: 'Residential',
+    transaction_type: 'buy' as 'buy' | 'sell',
+  });
+  const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle');
+  const [error, setError] = useState('');
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      onSignInRequired();
+      return;
+    }
+    setStatus('saving');
+    setError('');
+    try {
+      const jwt = await account.createJWT();
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwt.jwt}`,
+        },
+        body: JSON.stringify({ ...form, agent_id: agentId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Could not submit review.');
+        setStatus('error');
+        return;
+      }
+      const data = await res.json();
+      onSubmitted(data.review);
+      setStatus('done');
+      setForm({ reviewer_name: '', rating: 5, comment: '', property_type: 'Residential', transaction_type: 'buy' });
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setStatus('error');
+    }
+  }
+
+  if (status === 'done') {
+    return (
+      <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+        Review submitted — thank you!
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="rounded-lg border border-gray-200 bg-gray-50 p-5 space-y-4">
+      <h3 className="font-semibold text-gray-900">Leave a review</h3>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">Your name</span>
+          <input
+            required
+            value={form.reviewer_name}
+            onChange={(e) => setForm({ ...form, reviewer_name: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">Rating (1–5)</span>
+          <input
+            required
+            type="number"
+            min={1}
+            max={5}
+            value={form.rating}
+            onChange={(e) => setForm({ ...form, rating: Number(e.target.value) })}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">Transaction type</span>
+          <select
+            value={form.transaction_type}
+            onChange={(e) => setForm({ ...form, transaction_type: e.target.value as 'buy' | 'sell' })}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="buy">Buyer</option>
+            <option value="sell">Seller</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">Property type</span>
+          <input
+            value={form.property_type}
+            onChange={(e) => setForm({ ...form, property_type: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+        </label>
+      </div>
+      <label className="block">
+        <span className="text-sm font-medium text-gray-700">Review</span>
+        <textarea
+          required
+          rows={4}
+          value={form.comment}
+          onChange={(e) => setForm({ ...form, comment: e.target.value })}
+          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        />
+      </label>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <button
+        type="submit"
+        disabled={status === 'saving'}
+        className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
+      >
+        {isAuthenticated
+          ? status === 'saving' ? 'Submitting...' : 'Submit review'
+          : 'Sign in to leave a review'}
+      </button>
+    </form>
   );
 }
 

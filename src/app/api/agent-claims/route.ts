@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminEmail, listAgentClaims, upsertAgentClaim } from '@/lib/appwriteServer';
+import { listAgentClaims, upsertAgentClaim, verifyAdminRequest } from '@/lib/appwriteServer';
 
 export async function GET(request: NextRequest) {
   try {
-    const email = request.nextUrl.searchParams.get('email') || '';
-    if (!isAdminEmail(email)) {
+    const admin = await verifyAdminRequest(request);
+    if (!admin) {
       return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
     }
 

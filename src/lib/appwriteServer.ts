@@ -22,6 +22,46 @@ export function isAdminEmail(email: string) {
   return adminEmails.includes(email.toLowerCase());
 }
 
+/** Verify an Appwrite JWT (from Authorization: Bearer header) and return the user, or null. */
+export async function verifyJWT(jwt: string): Promise<{ id: string; email: string } | null> {
+  if (!jwt) return null;
+  try {
+    const res = await fetch(`${endpoint}/account`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Appwrite-Project': projectId,
+        'X-Appwrite-JWT': jwt,
+      },
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const user = await res.json();
+    return { id: user.$id, email: String(user.email || '') };
+  } catch {
+    return null;
+  }
+}
+
+/** Extract Bearer token from Authorization header and verify it is an admin. */
+export async function verifyAdminRequest(
+  request: Request
+): Promise<{ id: string; email: string } | null> {
+  const auth = request.headers.get('authorization') || '';
+  const jwt = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  const user = await verifyJWT(jwt);
+  if (!user || !isAdminEmail(user.email)) return null;
+  return user;
+}
+
+/** Extract Bearer token and verify the user is logged in (any role). */
+export async function verifyUserRequest(
+  request: Request
+): Promise<{ id: string; email: string } | null> {
+  const auth = request.headers.get('authorization') || '';
+  const jwt = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  return verifyJWT(jwt);
+}
+
 export function assertServerConfigured() {
   if (!endpoint || !projectId || !apiKey || !databaseId) {
     throw new Error('Appwrite server environment is not configured.');
@@ -120,6 +160,50 @@ export async function rejectAgentClaim(claimId: string, adminNote = '') {
   );
 
   return mapAgentClaim(updatedClaim);
+}
+
+export async function createReview(
+  agentId: string,
+  data: {
+    reviewer_name: string;
+    rating: number;
+    comment: string;
+    property_type: string;
+    transaction_type: 'buy' | 'sell';
+  }
+) {
+  assertServerConfigured();
+  const reviewsCollectionId =
+    process.env.NEXT_PUBLIC_APPWRITE_REVIEWS_COLLECTION_ID || 'reviews';
+
+  const document = await appwriteRequest<Record<string, unknown>>(
+    'POST',
+    `/databases/${databaseId}/collections/${reviewsCollectionId}/documents`,
+    {
+      documentId: 'unique()',
+      data: {
+        agent_id: agentId,
+        reviewer_name: data.reviewer_name,
+        rating: Math.min(5, Math.max(1, Math.round(data.rating))),
+        comment: data.comment,
+        property_type: data.property_type,
+        transaction_type: data.transaction_type,
+        created_at: new Date().toISOString(),
+      },
+      permissions: ['read("any")'],
+    }
+  );
+
+  return {
+    id: String(document.$id || ''),
+    agent_id: agentId,
+    reviewer_name: data.reviewer_name,
+    rating: Number(document.rating || data.rating),
+    comment: data.comment,
+    property_type: data.property_type,
+    transaction_type: data.transaction_type,
+    created_at: String(document.$createdAt || new Date().toISOString()),
+  } satisfies import('@/types').Review;
 }
 
 async function appwriteRequest<T>(method: string, path: string, body?: unknown) {
