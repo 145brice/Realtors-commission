@@ -11,6 +11,7 @@ import { getCurrentUser } from '@/lib/appwrite';
 import { account } from '@/lib/appwrite';
 import { Agent, IdxListing, RecentSale, Review } from '@/types';
 import IdxListingCard from './IdxListingCard';
+import CommissionDisclaimer from './CommissionDisclaimer';
 
 interface AgentDetailPageProps {
   agentId: string;
@@ -182,6 +183,7 @@ export default function AgentDetailPage({ agentId }: AgentDetailPageProps) {
                     </span>
                   </div>
                 </section>
+                <CommissionDisclaimer variant="full" />
               </div>
             )}
 

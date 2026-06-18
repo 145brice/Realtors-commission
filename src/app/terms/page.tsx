@@ -36,7 +36,26 @@ export default function TermsPage() {
           to contact.
         </p>
 
-        <h2 className="text-lg font-semibold text-gray-900">4. Listing data &amp; MLS/IDX</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          4. Commission rates, advertising &amp; buyer broker agreements
+        </h2>
+        <p>
+          Commission rates displayed on Commission Scout are advertised and self-reported by each
+          agent. Real estate commissions are fully negotiable and are not set by law, by any MLS, or
+          by Commission Scout. Each agent is solely responsible for advertising accurate rates and
+          for honoring the rates they publish here in their written agreements with clients.
+        </p>
+        <p>
+          Commission Scout is a directory and is not a party to any listing agreement, buyer broker
+          agreement (BBA), or compensation arrangement. Under current rules (including the 2024
+          National Association of REALTORS&reg; settlement), buyers enter a written buyer broker
+          agreement specifying their agent&apos;s compensation before touring a home. You are
+          responsible for confirming all fees and terms directly with your agent, in writing, before
+          engaging their services. Commission Scout disclaims liability for any discrepancy between a
+          rate advertised here and the terms an agent ultimately offers.
+        </p>
+
+        <h2 className="text-lg font-semibold text-gray-900">5. Listing data &amp; MLS/IDX</h2>
         <p>
           Where property listings are displayed, they are subject to the rules of the applicable
           Multiple Listing Service (MLS) and the broker participant agreement governing the IDX
@@ -44,7 +63,7 @@ export default function TermsPage() {
           properties.
         </p>
 
-        <h2 className="text-lg font-semibold text-gray-900">5. Contact</h2>
+        <h2 className="text-lg font-semibold text-gray-900">6. Contact</h2>
         <p>
           Questions about these terms? Email{' '}
           <a className="text-blue-600 hover:underline" href="mailto:145brice@gmail.com">
